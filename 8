@@ -1,3 +1,4 @@
+```csharp
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,154 +8,404 @@ using System.Threading.Tasks;
 
 namespace ConsoleApp4
 {
-    using System;
-    public interface IFlyable
+    public sealed class Logger
     {
-        void Fly();
-    }
+        private static Logger _instance;
+        private static readonly object _lock = new object();
 
-    public interface ISwimmable
-    {
-        void Swim();
-    }
+        private Logger() { }
 
-    public class Animal
-    {
-        public string Name { get; set; }
-
-        public Animal(string name)
+        public static Logger Instance
         {
-            Name = name;
+            get
+            {
+                lock (_lock)
+                {
+                    if (_instance == null)
+                    {
+                        _instance = new Logger();
+                    }
+                    return _instance;
+                }
+            }
         }
 
-        public virtual void MakeSound()
+        public void Log(string message)
         {
-            Console.WriteLine($"{Name} издает звук");
-        }
-    }
-
-    public class Dog : Animal
-    {
-        public Dog(string name) : base(name) { }
-
-        public override void MakeSound()
-        {
-            Console.WriteLine($"{Name} лает: Гав-гав!");
+            Console.WriteLine($"[ЛОГ] {DateTime.Now:yyyy-MM-dd HH:mm:ss}: {message}");
         }
 
-        public void Fetch()
+        public void Error(string message)
         {
-            Console.WriteLine($"{Name} приносит палку");
+            Console.WriteLine($"[ОШИБКА] {DateTime.Now:yyyy-MM-dd HH:mm:ss}: {message}");
+        }
+
+        public void Warning(string message)
+        {
+            Console.WriteLine($"[ПРЕДУПРЕЖДЕНИЕ] {DateTime.Now:yyyy-MM-dd HH:mm:ss}: {message}");
         }
     }
 
-    public class Bird : Animal, IFlyable
+    public sealed class Configuration
     {
-        public Bird(string name) : base(name) { }
+        private static Configuration _instance;
+        private static readonly object _lock = new object();
 
-        public override void MakeSound()
+        private string _connectionString;
+        private int _timeout;
+        private bool _isDebug;
+
+        private Configuration()
         {
-            Console.WriteLine($"{Name} чирикает: Чик-чирик!");
+            _connectionString = "Server=localhost;Database=Test;Trusted_Connection=true;";
+            _timeout = 30;
+            _isDebug = true;
         }
 
-        public void Fly()
+        public static Configuration Instance
         {
-            Console.WriteLine($"{Name} летает в небе");
+            get
+            {
+                lock (_lock)
+                {
+                    if (_instance == null)
+                    {
+                        _instance = new Configuration();
+                    }
+                    return _instance;
+                }
+            }
+        }
+
+        public string ConnectionString => _connectionString;
+
+        public int Timeout => _timeout;
+
+        public bool IsDebug => _isDebug;
+
+        public void UpdateConnectionString(string newConnectionString)
+        {
+            if (!string.IsNullOrEmpty(newConnectionString))
+            {
+                _connectionString = newConnectionString;
+            }
+        }
+
+        public void SetDebugMode(bool isDebug)
+        {
+            _isDebug = isDebug;
         }
     }
 
-    public class Fish : Animal, ISwimmable
+    public sealed class SecurityManager
     {
-        public Fish(string name) : base(name) { }
+        private string _encryptionKey;
+        private int _accessLevel;
 
-        public override void MakeSound()
+        public SecurityManager(string encryptionKey, int accessLevel)
         {
-            Console.WriteLine($"{Name} издает булькающие звуки");
+            _encryptionKey = encryptionKey ?? throw new ArgumentNullException(nameof(encryptionKey));
+            _accessLevel = accessLevel;
         }
 
-        public void Swim()
+        public string Encrypt(string data)
         {
-            Console.WriteLine($"{Name} плавает в воде");
+            if (string.IsNullOrEmpty(data))
+                return string.Empty;
+
+            char[] chars = data.ToCharArray();
+            for (int i = 0; i < chars.Length; i++)
+            {
+                chars[i] = (char)(chars[i] + 1);
+            }
+            return new string(chars);
+        }
+
+        public string Decrypt(string encryptedData)
+        {
+            if (string.IsNullOrEmpty(encryptedData))
+                return string.Empty;
+
+            char[] chars = encryptedData.ToCharArray();
+            for (int i = 0; i < chars.Length; i++)
+            {
+                chars[i] = (char)(chars[i] - 1);
+            }
+            return new string(chars);
+        }
+
+        public bool HasAccess(int requiredLevel)
+        {
+            return _accessLevel >= requiredLevel;
+        }
+
+        private void ValidateKey()
+        {
+            if (string.IsNullOrEmpty(_encryptionKey) || _encryptionKey.Length < 8)
+            {
+                throw new InvalidOperationException("Неверный ключ шифрования");
+            }
         }
     }
 
-    public class Duck : Animal, IFlyable, ISwimmable
+    public sealed class MathCalculator
     {
-        public Duck(string name) : base(name) { }
+        public const double PI = 3.141592653589793;
+        public const double E = 2.718281828459045;
 
-        public override void MakeSound()
+        public double CalculateCircleArea(double radius)
         {
-            Console.WriteLine($"{Name} крякает: Кря-кря!");
+            if (radius < 0)
+                throw new ArgumentException("Радиус не может быть отрицательным");
+
+            return PI * radius * radius;
         }
 
-        public void Fly()
+        public double CalculateCircleCircumference(double radius)
         {
-            Console.WriteLine($"{Name} летает невысоко");
+            if (radius < 0)
+                throw new ArgumentException("Радиус не может быть отрицательным");
+
+            return 2 * PI * radius;
         }
 
-        public void Swim()
+        public double CalculateRectangleArea(double width, double height)
         {
-            Console.WriteLine($"{Name} плавает в пруду");
+            if (width < 0 || height < 0)
+                throw new ArgumentException("Размеры не могут быть отрицательными");
+
+            return width * height;
+        }
+
+        public double CalculateTriangleArea(double baseLength, double height)
+        {
+            if (baseLength < 0 || height < 0)
+                throw new ArgumentException("Размеры не могут быть отрицательными");
+
+            return 0.5 * baseLength * height;
+        }
+
+        public static double DegreesToRadians(double degrees)
+        {
+            return degrees * (PI / 180.0);
+        }
+
+        public static double RadiansToDegrees(double radians)
+        {
+            return radians * (180.0 / PI);
         }
     }
 
-    public class Vehicle
+    public sealed class Validator
     {
-        public string Brand { get; set; }
-
-        public Vehicle(string brand)
+        public bool IsValidEmail(string email)
         {
-            Brand = brand;
+            if (string.IsNullOrEmpty(email))
+                return false;
+
+            return email.Contains("@") && email.Contains(".");
         }
 
-        public virtual void Move()
+        public bool IsValidPhoneNumber(string phone)
         {
-            Console.WriteLine($"{Brand} двигается");
+            if (string.IsNullOrEmpty(phone))
+                return false;
+
+            return phone.Length >= 10 && System.Text.RegularExpressions.Regex.IsMatch(phone, @"^[0-9+\-() ]+$");
+        }
+
+        public bool IsStrongPassword(string password)
+        {
+            if (string.IsNullOrEmpty(password) || password.Length < 8)
+                return false;
+
+            bool hasUpper = false;
+            bool hasLower = false;
+            bool hasDigit = false;
+            bool hasSpecial = false;
+
+            foreach (char c in password)
+            {
+                if (char.IsUpper(c)) hasUpper = true;
+                if (char.IsLower(c)) hasLower = true;
+                if (char.IsDigit(c)) hasDigit = true;
+                if (!char.IsLetterOrDigit(c)) hasSpecial = true;
+            }
+
+            return hasUpper && hasLower && hasDigit && hasSpecial;
+        }
+
+        public bool IsInRange(int value, int min, int max)
+        {
+            return value >= min && value <= max;
+        }
+
+        public bool IsInRange(double value, double min, double max)
+        {
+            return value >= min && value <= max;
         }
     }
 
-    public class Car : Vehicle
+    public class BaseClass
     {
-        public Car(string brand) : base(brand) { }
-
-        public override void Move()
+        public virtual void NormalMethod()
         {
-            Console.WriteLine($"{Brand} едет по дороге");
+            Console.WriteLine("Обычный метод в BaseClass");
         }
 
-        public void Honk()
+        public virtual void MethodForSealing()
         {
-            Console.WriteLine($"{Brand} сигналит: Би-бип!");
+            Console.WriteLine("Этот метод будет запечатан в производном классе");
         }
     }
 
-    public class Boat : Vehicle, ISwimmable
+    public class DerivedClass : BaseClass
     {
-        public Boat(string brand) : base(brand) { }
-
-        public override void Move()
+        public override void NormalMethod()
         {
-            Console.WriteLine($"{Brand} плывет по воде");
+            Console.WriteLine("Обычный метод в DerivedClass");
         }
 
-        public void Swim()
+        public sealed override void MethodForSealing()
         {
-            Console.WriteLine($"{Brand} плавает как лодка");
+            Console.WriteLine("Этот метод запечатан и не может быть переопределен далее");
         }
     }
 
-    public class Airplane : Vehicle, IFlyable
+    public class FurtherDerivedClass : DerivedClass
     {
-        public Airplane(string brand) : base(brand) { }
-
-        public override void Move()
+        public override void NormalMethod()
         {
-            Console.WriteLine($"{Brand} летит по воздуху");
+            Console.WriteLine("Обычный метод в FurtherDerivedClass");
+        }
+    }
+
+    public sealed class AuditTrail
+    {
+        private readonly List<string> _auditLog;
+
+        public AuditTrail()
+        {
+            _auditLog = new List<string>();
         }
 
-        public void Fly()
+        public void AddEntry(string action, string user)
         {
-            Console.WriteLine($"{Brand} летит на большой высоте");
+            string entry = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - Пользователь: {user} - Действие: {action}";
+            _auditLog.Add(entry);
+            Console.WriteLine($"АУДИТ: {entry}");
+        }
+
+        public void DisplayAuditLog()
+        {
+            Console.WriteLine("\n=== ЖУРНАЛ АУДИТА ===");
+            foreach (string entry in _auditLog)
+            {
+                Console.WriteLine(entry);
+            }
+            Console.WriteLine("=====================\n");
+        }
+
+        public void ClearAuditLog()
+        {
+            _auditLog.Clear();
+            Console.WriteLine("Журнал аудита очищен");
+        }
+    }
+
+    public sealed class PaymentProcessor
+    {
+        private decimal _balance;
+
+        public PaymentProcessor(decimal initialBalance = 0)
+        {
+            _balance = initialBalance;
+        }
+
+        public bool ProcessPayment(decimal amount, string paymentMethod)
+        {
+            if (amount <= 0)
+            {
+                Console.WriteLine($"Неверная сумма платежа: {amount}");
+                return false;
+            }
+
+            if (_balance >= amount)
+            {
+                _balance -= amount;
+                Console.WriteLine($"Платеж на сумму {amount:C} обработан с помощью {paymentMethod}. Остаток средств: {_balance:C}");
+                return true;
+            }
+            else
+            {
+                Console.WriteLine($"Недостаточно средств. Требуется: {amount:C}, Доступно: {_balance:C}");
+                return false;
+            }
+        }
+
+        public void AddFunds(decimal amount)
+        {
+            if (amount > 0)
+            {
+                _balance += amount;
+                Console.WriteLine($"Добавлено {amount:C}. Новый баланс: {_balance:C}");
+            }
+        }
+
+        public decimal GetBalance()
+        {
+            return _balance;
+        }
+
+        private bool ValidatePaymentMethod(string paymentMethod)
+        {
+            string[] validMethods = { "Кредитная карта", "Дебетовая карта", "PayPal", "Банковский перевод" };
+            return Array.Exists(validMethods, method => method.Equals(paymentMethod, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    public sealed class SystemMonitor
+    {
+        private DateTime _startTime;
+        private int _errorCount;
+        private int _warningCount;
+
+        public SystemMonitor()
+        {
+            _startTime = DateTime.Now;
+            _errorCount = 0;
+            _warningCount = 0;
+        }
+
+        public void ReportError(string errorMessage)
+        {
+            _errorCount++;
+            Console.WriteLine($"[СИСТЕМНАЯ ОШИБКА #{_errorCount}] {errorMessage}");
+        }
+
+        public void ReportWarning(string warningMessage)
+        {
+            _warningCount++;
+            Console.WriteLine($"[СИСТЕМНОЕ ПРЕДУПРЕЖДЕНИЕ #{_warningCount}] {warningMessage}");
+        }
+
+        public void GenerateReport()
+        {
+            TimeSpan uptime = DateTime.Now - _startTime;
+            Console.WriteLine("\n=== ОТЧЕТ МОНИТОРА СИСТЕМЫ ===");
+            Console.WriteLine($"Время начала: {_startTime:yyyy-MM-dd HH:mm:ss}");
+            Console.WriteLine($"Время работы: {uptime:hh\\:mm\\:ss}");
+            Console.WriteLine($"Всего ошибок: {_errorCount}");
+            Console.WriteLine($"Всего предупреждений: {_warningCount}");
+            Console.WriteLine("==============================\n");
+        }
+
+        public void Reset()
+        {
+            _startTime = DateTime.Now;
+            _errorCount = 0;
+            _warningCount = 0;
+            Console.WriteLine("Монитор системы сброшен");
         }
     }
 
@@ -162,19 +413,20 @@ namespace ConsoleApp4
     {
         static void Main()
         {
+
             while (true)
             {
                 Console.WriteLine("\nВыберите демонстрацию (1-10):");
-                Console.WriteLine("1. Оператор is для проверки типа");
-                Console.WriteLine("2. Оператор as для приведения типа");
-                Console.WriteLine("3. Проверка объекта на принадлежность типу через is");
-                Console.WriteLine("4. Оператор as для безопасного кастинга");
-                Console.WriteLine("5. As для получения null при ошибке");
-                Console.WriteLine("6. Логика обработки null после приведения через as");
-                Console.WriteLine("7. Cast и обработка исключений");
-                Console.WriteLine("8. Методы интерфейса после приведения as");
-                Console.WriteLine("9. Проверка типа и вызов специфичного метода");
-                Console.WriteLine("10. Сравнение работы is и as");
+                Console.WriteLine("1. Sealed класс и попытка наследования");
+                Console.WriteLine("2. Sealed класс с закрытым методом");
+                Console.WriteLine("3. Sealed для предотвращения наследования");
+                Console.WriteLine("4. Невозможность override sealed метода");
+                Console.WriteLine("5. Sealed класс с публичным методом");
+                Console.WriteLine("6. Sealed класс с ограничением на конструктор");
+                Console.WriteLine("7. Sealed класс для логирования");
+                Console.WriteLine("8. Sealed класс для конфиденциальных данных");
+                Console.WriteLine("9. Sealed класс с защищёнными свойствами");
+                Console.WriteLine("10. Sealed класс для контрольных объектов");
                 Console.WriteLine("0. Все демонстрации");
 
                 Console.Write("Ваш выбор: ");
@@ -183,37 +435,37 @@ namespace ConsoleApp4
                 switch (choice)
                 {
                     case "1":
-                        DemonstrateIsOperator();
+                        DemonstrateSealedInheritanceAttempt();
                         break;
                     case "2":
-                        DemonstrateAsOperator();
+                        DemonstrateSealedWithPrivateMethod();
                         break;
                     case "3":
-                        DemonstrateTypeCheckWithIs();
+                        DemonstratePreventInheritance();
                         break;
                     case "4":
-                        DemonstrateSafeCastingWithAs();
+                        DemonstrateCannotOverrideSealedMethod();
                         break;
                     case "5":
-                        DemonstrateAsReturnsNull();
+                        DemonstrateSealedWithPublicMethod();
                         break;
                     case "6":
-                        DemonstrateNullHandlingAfterAs();
+                        DemonstrateSealedWithConstructorRestriction();
                         break;
                     case "7":
-                        DemonstrateCastWithExceptionHandling();
+                        DemonstrateSealedForLogging();
                         break;
                     case "8":
-                        DemonstrateInterfaceMethodsAfterAs();
+                        DemonstrateSealedForConfidentialData();
                         break;
                     case "9":
-                        DemonstrateTypeCheckAndSpecificMethod();
+                        DemonstrateSealedWithProtectedProperties();
                         break;
                     case "10":
-                        DemonstrateIsVsAsComparison();
+                        DemonstrateSealedForControlObjects();
                         break;
                     case "0":
-                        DemonstrateAll();
+                        DemonstrateAllSealedExamples();
                         break;
                     default:
                         Console.WriteLine("Неверный выбор, попробуйте снова");
@@ -222,447 +474,186 @@ namespace ConsoleApp4
             }
         }
 
-        static void DemonstrateIsOperator()
+        static void DemonstrateSealedInheritanceAttempt()
         {
-            Console.WriteLine("\n=== 1. ОПЕРАТОР IS ДЛЯ ПРОВЕРКИ ТИПА ===");
+            Console.WriteLine("\n=== 1. SEALED КЛАСС И ПОПЫТКА НАСЛЕДОВАНИЯ ===");
 
-            Animal dog = new Dog("Рекс");
-            Animal bird = new Bird("Кеша");
-            Animal fish = new Fish("Немо");
+            Logger logger = Logger.Instance;
+            logger.Log("Приложение запущено");
+            logger.Warning("Это предупреждение");
+            logger.Error("Это ошибка");
 
-            Console.WriteLine("Проверка типов с оператором is:");
-
-            if (dog is Dog)
-            {
-                Console.WriteLine("dog является Dog");
-            }
-
-            if (bird is Bird)
-            {
-                Console.WriteLine("bird является Bird");
-            }
-
-            if (fish is Fish)
-            {
-                Console.WriteLine("fish является Fish");
-            }
-
-            if (dog is Bird)
-            {
-                Console.WriteLine("dog является Bird");
-            }
-            else
-            {
-                Console.WriteLine("dog не является Bird");
-            }
-
-            if (bird is IFlyable)
-            {
-                Console.WriteLine("bird реализует IFlyable");
-            }
+            Console.WriteLine("Наследование от sealed класса Logger невозможно - ошибка компиляции");
         }
 
-        static void DemonstrateAsOperator()
+        static void DemonstrateSealedWithPrivateMethod()
         {
-            Console.WriteLine("\n=== 2. ОПЕРАТОР AS ДЛЯ ПРИВЕДЕНИЯ ТИПА ===");
+            Console.WriteLine("\n=== 2. SEALED КЛАСС С ЗАКРЫТЫМ МЕТОДОМ ===");
 
-            Animal animal1 = new Dog("Барсик");
-            Animal animal2 = new Bird("Чижик");
+            SecurityManager security = new SecurityManager("mySecretKey123", 2);
 
-            Dog dog = animal1 as Dog;
-            if (dog != null)
-            {
-                Console.WriteLine("Приведение animal1 к Dog успешно:");
-                dog.Fetch();
-            }
+            string original = "Конфиденциальные данные";
+            string encrypted = security.Encrypt(original);
+            string decrypted = security.Decrypt(encrypted);
 
-            Bird bird = animal2 as Bird;
-            if (bird != null)
-            {
-                Console.WriteLine("Приведение animal2 к Bird успешно:");
-                bird.Fly();
-            }
+            Console.WriteLine($"Оригинал: {original}");
+            Console.WriteLine($"Зашифровано: {encrypted}");
+            Console.WriteLine($"Расшифровано: {decrypted}");
 
-            Fish fish = animal1 as Fish;
-            if (fish == null)
-            {
-                Console.WriteLine("Приведение animal1 к Fish вернуло null");
-            }
+            Console.WriteLine($"Имеет уровень доступа 3: {security.HasAccess(3)}");
+            Console.WriteLine($"Имеет уровень доступа 1: {security.HasAccess(1)}");
         }
 
-        static void DemonstrateTypeCheckWithIs()
+        static void DemonstratePreventInheritance()
         {
-            Console.WriteLine("\n=== 3. ПРОВЕРКА ОБЪЕКТА НА ПРИНАДЛЕЖНОСТЬ ТИПУ ЧЕРЕЗ IS ===");
+            Console.WriteLine("\n=== 3. SEALED ДЛЯ ПРЕДОТВРАЩЕНИЯ НАСЛЕДОВАНИЯ ===");
 
-            List<Animal> animals = new List<Animal>
-        {
-            new Dog("Шарик"),
-            new Bird("Попугай"),
-            new Fish("Золотая рыбка"),
-            new Duck("Кряква"),
-            new Dog("Бобик")
-        };
+            MathCalculator calculator = new MathCalculator();
 
-            Console.WriteLine("Проверка типов животных:");
+            Console.WriteLine($"Площадь круга с радиусом 5: {calculator.CalculateCircleArea(5):F2}");
+            Console.WriteLine($"Длина окружности с радиусом 5: {calculator.CalculateCircleCircumference(5):F2}");
+            Console.WriteLine($"Площадь прямоугольника 4x6: {calculator.CalculateRectangleArea(4, 6):F2}");
+            Console.WriteLine($"Площадь треугольника с основанием 8 и высотой 5: {calculator.CalculateTriangleArea(8, 5):F2}");
 
-            foreach (Animal animal in animals)
-            {
-                Console.WriteLine($"\n{animal.Name}:");
-
-                if (animal is Dog)
-                {
-                    Console.WriteLine("  - Это собака");
-                }
-
-                if (animal is Bird)
-                {
-                    Console.WriteLine("  - Это птица");
-                }
-
-                if (animal is Fish)
-                {
-                    Console.WriteLine("  - Это рыба");
-                }
-
-                if (animal is IFlyable)
-                {
-                    Console.WriteLine("  - Может летать");
-                }
-
-                if (animal is ISwimmable)
-                {
-                    Console.WriteLine("  - Может плавать");
-                }
-            }
+            Console.WriteLine($"45 градусов в радианах: {MathCalculator.DegreesToRadians(45):F4}");
+            Console.WriteLine($"π/4 радиан в градусах: {MathCalculator.RadiansToDegrees(MathCalculator.PI / 4):F1}");
         }
 
-        static void DemonstrateSafeCastingWithAs()
+        static void DemonstrateCannotOverrideSealedMethod()
         {
-            Console.WriteLine("\n=== 4. ОПЕРАТОР AS ДЛЯ БЕЗОПАСНОГО КАСТИНГА ===");
+            Console.WriteLine("\n=== 4. НЕВОЗМОЖНОСТЬ OVERRIDE SEALED МЕТОДА ===");
 
-            Vehicle car = new Car("Toyota");
-            Vehicle boat = new Boat("Yamaha");
-            Vehicle airplane = new Airplane("Boeing");
+            DerivedClass derived = new DerivedClass();
+            derived.NormalMethod();
+            derived.MethodForSealing();
 
-            Console.WriteLine("Безопасное приведение с as:");
+            FurtherDerivedClass further = new FurtherDerivedClass();
+            further.NormalMethod();
+            further.MethodForSealing();
 
-            Car carCast = car as Car;
-            if (carCast != null)
-            {
-                carCast.Honk();
-            }
-
-            Boat boatCast = boat as Boat;
-            if (boatCast != null)
-            {
-                boatCast.Swim();
-            }
-
-            Airplane airplaneCast = airplane as Airplane;
-            if (airplaneCast != null)
-            {
-                airplaneCast.Fly();
-            }
-
-            Car invalidCast = boat as Car;
-            if (invalidCast == null)
-            {
-                Console.WriteLine("Приведение Boat к Car вернуло null - безопасно!");
-            }
+            Console.WriteLine("MethodForSealing sealed в DerivedClass и не может быть переопределен в FurtherDerivedClass");
         }
 
-        static void DemonstrateAsReturnsNull()
+        static void DemonstrateSealedWithPublicMethod()
         {
-            Console.WriteLine("\n=== 5. AS ДЛЯ ПОЛУЧЕНИЯ NULL ПРИ ОШИБКЕ ===");
+            Console.WriteLine("\n=== 5. SEALED КЛАСС С ПУБЛИЧНЫМ МЕТОДОМ ===");
 
-            Animal dog = new Dog("Рекс");
-            Animal bird = new Bird("Кеша");
+            Validator validator = new Validator();
 
-            Console.WriteLine("As возвращает null при невозможности приведения:");
+            Console.WriteLine($"Email 'test@example.com' валиден: {validator.IsValidEmail("test@example.com")}");
+            Console.WriteLine($"Email 'invalid' валиден: {validator.IsValidEmail("invalid")}");
 
-            Fish fishFromDog = dog as Fish;
-            Console.WriteLine($"dog as Fish: {fishFromDog?.Name ?? "null"}");
+            Console.WriteLine($"Телефон '+7 (123) 456-7890' валиден: {validator.IsValidPhoneNumber("+7 (123) 456-7890")}");
+            Console.WriteLine($"Телефон 'abc' валиден: {validator.IsValidPhoneNumber("abc")}");
 
-            Dog dogFromBird = bird as Dog;
-            Console.WriteLine($"bird as Dog: {dogFromBird?.Name ?? "null"}");
+            Console.WriteLine($"Пароль 'StrongPass123!' надежный: {validator.IsStrongPassword("StrongPass123!")}");
+            Console.WriteLine($"Пароль 'weak' надежный: {validator.IsStrongPassword("weak")}");
 
-            Bird birdFromBird = bird as Bird;
-            Console.WriteLine($"bird as Bird: {birdFromBird?.Name ?? "null"}");
-
-            IFlyable flyableFromDog = dog as IFlyable;
-            Console.WriteLine($"dog as IFlyable: {(flyableFromDog != null ? "не null" : "null")}");
-
-            IFlyable flyableFromBird = bird as IFlyable;
-            Console.WriteLine($"bird as IFlyable: {(flyableFromBird != null ? "не null" : "null")}");
+            Console.WriteLine($"15 в диапазоне 10-20: {validator.IsInRange(15, 10, 20)}");
+            Console.WriteLine($"25 в диапазоне 10-20: {validator.IsInRange(25, 10, 20)}");
         }
 
-        static void DemonstrateNullHandlingAfterAs()
+        static void DemonstrateSealedWithConstructorRestriction()
         {
-            Console.WriteLine("\n=== 6. ЛОГИКА ОБРАБОТКИ NULL ПОСЛЕ ПРИВЕДЕНИЯ ЧЕРЕЗ AS ===");
+            Console.WriteLine("\n=== 6. SEALED КЛАСС С ОГРАНИЧЕНИЕМ НА КОНСТРУКТОР ===");
 
-            object[] objects = {
-            new Dog("Барсик"),
-            "Просто строка",
-            42,
-            new Bird("Соловей"),
-            new List<int>(),
-            new Fish("Акула")
-        };
+            Configuration config = Configuration.Instance;
 
-            Console.WriteLine("Обработка разных объектов после as:");
+            Console.WriteLine($"Строка подключения: {config.ConnectionString}");
+            Console.WriteLine($"Таймаут: {config.Timeout} секунд");
+            Console.WriteLine($"Режим отладки: {config.IsDebug}");
 
-            foreach (object obj in objects)
-            {
-                Animal animal = obj as Animal;
-                if (animal != null)
-                {
-                    Console.WriteLine($"Объект {obj.GetType().Name}: {animal.Name}");
-                    animal.MakeSound();
-                }
-                else
-                {
-                    Console.WriteLine($"Объект {obj.GetType().Name}: не является Animal");
-                }
+            config.SetDebugMode(false);
+            config.UpdateConnectionString("Server=prod;Database=Production;Trusted_Connection=true;");
 
-                IFlyable flyable = obj as IFlyable;
-                if (flyable != null)
-                {
-                    Console.WriteLine("  Может летать!");
-                    flyable.Fly();
-                }
-
-                Console.WriteLine();
-            }
+            Console.WriteLine($"После обновления - Режим отладки: {config.IsDebug}");
+            Console.WriteLine($"После обновления - Строка подключения: {config.ConnectionString}");
         }
 
-        static void DemonstrateCastWithExceptionHandling()
+        static void DemonstrateSealedForLogging()
         {
-            Console.WriteLine("\n=== 7. CAST И ОБРАБОТКА ИСКЛЮЧЕНИЙ ===");
+            Console.WriteLine("\n=== 7. SEALED КЛАСС ДЛЯ ЛОГИРОВАНИЯ ===");
 
-            Animal dog = new Dog("Рекс");
-            Animal bird = new Bird("Кеша");
+            Logger logger = Logger.Instance;
 
-            Console.WriteLine("Прямое приведение с обработкой исключений:");
-
-            try
-            {
-                Dog dogCast = (Dog)dog;
-                Console.WriteLine("(Dog)dog успешно:");
-                dogCast.Fetch();
-            }
-            catch (InvalidCastException ex)
-            {
-                Console.WriteLine($"Ошибка приведения: {ex.Message}");
-            }
-
-            try
-            {
-                Fish fishCast = (Fish)dog;
-                Console.WriteLine("(Fish)dog успешно:");
-                fishCast.Swim();
-            }
-            catch (InvalidCastException ex)
-            {
-                Console.WriteLine($"Ошибка приведения dog к Fish: {ex.Message}");
-            }
-
-            try
-            {
-                Bird birdCast = (Bird)bird;
-                Console.WriteLine("(Bird)bird успешно:");
-                birdCast.Fly();
-            }
-            catch (InvalidCastException ex)
-            {
-                Console.WriteLine($"Ошибка приведения: {ex.Message}");
-            }
-
-            try
-            {
-                Dog invalidCast = (Dog)bird;
-                Console.WriteLine("(Dog)bird успешно:");
-                invalidCast.Fetch();
-            }
-            catch (InvalidCastException ex)
-            {
-                Console.WriteLine($"Ошибка приведения bird к Dog: {ex.Message}");
-            }
+            logger.Log("Начало процесса логирования");
+            logger.Warning("Обнаружена потенциальная проблема");
+            logger.Error("Произошла критическая ошибка");
+            logger.Log("Завершение процесса логирования");
         }
 
-        static void DemonstrateInterfaceMethodsAfterAs()
+        static void DemonstrateSealedForConfidentialData()
         {
-            Console.WriteLine("\n=== 8. МЕТОДЫ ИНТЕРФЕЙСА ПОСЛЕ ПРИВЕДЕНИЯ AS ===");
+            Console.WriteLine("\n=== 8. SEALED КЛАСС ДЛЯ КОНФИДЕНЦИАЛЬНЫХ ДАННЫХ ===");
 
-            Animal duck = new Duck("Дональд");
-            Vehicle boat = new Boat("Катер");
-            Vehicle airplane = new Airplane("Самолет");
+            SecurityManager security = new SecurityManager("superSecretKey!@#", 5);
 
-            Console.WriteLine("Использование методов интерфейса после as:");
+            string sensitiveData = "Пароль: 123456; Кредитная карта: 4111111111111111";
+            string encrypted = security.Encrypt(sensitiveData);
 
-            IFlyable flyableDuck = duck as IFlyable;
-            if (flyableDuck != null)
-            {
-                Console.WriteLine("Утка может летать:");
-                flyableDuck.Fly();
-            }
+            Console.WriteLine($"Конфиденциальные данные: {sensitiveData}");
+            Console.WriteLine($"Зашифровано: {encrypted}");
+            Console.WriteLine($"Расшифровано: {security.Decrypt(encrypted)}");
 
-            ISwimmable swimmableDuck = duck as ISwimmable;
-            if (swimmableDuck != null)
-            {
-                Console.WriteLine("Утка может плавать:");
-                swimmableDuck.Swim();
-            }
-
-            IFlyable flyablePlane = airplane as IFlyable;
-            if (flyablePlane != null)
-            {
-                Console.WriteLine("Самолет может летать:");
-                flyablePlane.Fly();
-            }
-
-            ISwimmable swimmableBoat = boat as ISwimmable;
-            if (swimmableBoat != null)
-            {
-                Console.WriteLine("Лодка может плавать:");
-                swimmableBoat.Swim();
-            }
-
-            IFlyable flyableBoat = boat as IFlyable;
-            if (flyableBoat == null)
-            {
-                Console.WriteLine("Лодка не может летать - as вернул null");
-            }
+            Console.WriteLine($"Уровень доступа 3: {security.HasAccess(3)}");
+            Console.WriteLine($"Уровень доступа 7: {security.HasAccess(7)}");
         }
 
-        static void DemonstrateTypeCheckAndSpecificMethod()
+        static void DemonstrateSealedWithProtectedProperties()
         {
-            Console.WriteLine("\n=== 9. ПРОВЕРКА ТИПА И ВЫЗОВ СПЕЦИФИЧНОГО МЕТОДА ===");
+            Console.WriteLine("\n=== 9. SEALED КЛАСС С ЗАЩИЩЁННЫМИ СВОЙСТВАМИ ===");
 
-            List<Vehicle> vehicles = new List<Vehicle>
-        {
-            new Car("Mercedes"),
-            new Boat("Yamaha"),
-            new Airplane("Airbus"),
-            new Car("BMW"),
-            new Boat("SeaRay")
-        };
+            PaymentProcessor processor = new PaymentProcessor(1000.00m);
 
-            Console.WriteLine("Проверка типа и вызов специфичных методов:");
+            Console.WriteLine($"Начальный баланс: {processor.GetBalance():C}");
 
-            foreach (Vehicle vehicle in vehicles)
-            {
-                Console.WriteLine($"\n{vehicle.Brand}:");
-                vehicle.Move();
+            processor.ProcessPayment(250.50m, "Кредитная карта");
+            processor.ProcessPayment(100.00m, "PayPal");
+            processor.AddFunds(500.00m);
+            processor.ProcessPayment(1200.00m, "Банковский перевод");
 
-                if (vehicle is Car car)
-                {
-                    car.Honk();
-                }
-
-                if (vehicle is Boat boat)
-                {
-                    boat.Swim();
-                }
-
-                if (vehicle is Airplane plane)
-                {
-                    plane.Fly();
-                }
-
-                if (vehicle is IFlyable flyable)
-                {
-                    Console.WriteLine("  Используем интерфейс IFlyable:");
-                    flyable.Fly();
-                }
-
-                if (vehicle is ISwimmable swimmable)
-                {
-                    Console.WriteLine("  Используем интерфейс ISwimmable:");
-                    swimmable.Swim();
-                }
-            }
+            Console.WriteLine($"Финальный баланс: {processor.GetBalance():C}");
         }
 
-        static void DemonstrateIsVsAsComparison()
+        static void DemonstrateSealedForControlObjects()
         {
-            Console.WriteLine("\n=== 10. СРАВНЕНИЕ РАБОТЫ IS И AS ===");
+            Console.WriteLine("\n=== 10. SEALED КЛАСС ДЛЯ КОНТРОЛЬНЫХ ОБЪЕКТОВ ===");
 
-            Animal dog = new Dog("Рекс");
-            Animal bird = new Bird("Кеша");
-            Animal duck = new Duck("Скрудж");
+            AuditTrail audit = new AuditTrail();
+            SystemMonitor monitor = new SystemMonitor();
 
-            Console.WriteLine("СРАВНЕНИЕ IS И AS:");
-            Console.WriteLine("==================");
+            audit.AddEntry("Вход", "user1");
+            audit.AddEntry("Создание документа", "user1");
+            audit.AddEntry("Выход", "user1");
+            audit.AddEntry("Вход", "admin");
+            audit.DisplayAuditLog();
 
-            Console.WriteLine("\n1. Оператор IS (проверка типа):");
-            Console.WriteLine($"dog is Dog: {dog is Dog}");
-            Console.WriteLine($"dog is Bird: {dog is Bird}");
-            Console.WriteLine($"bird is IFlyable: {bird is IFlyable}");
-            Console.WriteLine($"duck is IFlyable: {duck is IFlyable}");
-            Console.WriteLine($"duck is ISwimmable: {duck is ISwimmable}");
+            monitor.ReportWarning("Обнаружено высокое использование памяти");
+            monitor.ReportError("Ошибка подключения к базе данных");
+            monitor.ReportWarning("Температура ЦП выше порогового значения");
+            monitor.GenerateReport();
 
-            Console.WriteLine("\n2. Оператор AS (приведение типа):");
-            Dog dogAsDog = dog as Dog;
-            Console.WriteLine($"dog as Dog: {dogAsDog?.Name ?? "null"}");
-
-            Bird dogAsBird = dog as Bird;
-            Console.WriteLine($"dog as Bird: {dogAsBird?.Name ?? "null"}");
-
-            IFlyable birdAsFlyable = bird as IFlyable;
-            Console.WriteLine($"bird as IFlyable: {(birdAsFlyable != null ? "успешно" : "null")}");
-
-            IFlyable duckAsFlyable = duck as IFlyable;
-            Console.WriteLine($"duck as IFlyable: {(duckAsFlyable != null ? "успешно" : "null")}");
-
-            ISwimmable duckAsSwimmable = duck as ISwimmable;
-            Console.WriteLine($"duck as ISwimmable: {(duckAsSwimmable != null ? "успешно" : "null")}");
-
-            Console.WriteLine("\n3. КОМБИНАЦИЯ IS И AS:");
-            Console.WriteLine("Эффективный подход - сначала проверяем, потом приводим:");
-
-            if (duck is IFlyable)
-            {
-                IFlyable flyable = duck as IFlyable;
-                Console.WriteLine("Проверили через is, привели через as:");
-                flyable.Fly();
-            }
-
-            Console.WriteLine("\n4. ПАТТЕРН С IS (совмещение проверки и приведения):");
-            if (duck is IFlyable flyableDuck)
-            {
-                Console.WriteLine("Проверка и приведение в одной операции:");
-                flyableDuck.Fly();
-            }
-
-            if (dog is Dog specificDog)
-            {
-                Console.WriteLine("Собака найдена через паттерн is:");
-                specificDog.Fetch();
-            }
-
-            Console.WriteLine("\nВЫВОД:");
-            Console.WriteLine("- IS: только проверка типа, возвращает bool");
-            Console.WriteLine("- AS: попытка приведения, возвращает объект или null");
-            Console.WriteLine("- IS + AS: безопасный и эффективный подход");
-            Console.WriteLine("- Паттерн IS: проверка и приведение в одной операции");
+            monitor.Reset();
+            monitor.GenerateReport();
         }
 
-        static void DemonstrateAll()
+        static void DemonstrateAllSealedExamples()
         {
-            Console.WriteLine("\n=== ПОЛНАЯ ДЕМОНСТРАЦИЯ ОПЕРАТОРОВ IS, AS И CAST ===\n");
+            Console.WriteLine("\n=== ПОЛНАЯ ДЕМОНСТРАЦИЯ SEALED КЛАССОВ ===\n");
 
-            DemonstrateIsOperator();
-            DemonstrateAsOperator();
-            DemonstrateTypeCheckWithIs();
-            DemonstrateSafeCastingWithAs();
-            DemonstrateAsReturnsNull();
-            DemonstrateNullHandlingAfterAs();
-            DemonstrateCastWithExceptionHandling();
-            DemonstrateInterfaceMethodsAfterAs();
-            DemonstrateTypeCheckAndSpecificMethod();
-            DemonstrateIsVsAsComparison();
+            DemonstrateSealedInheritanceAttempt();
+            DemonstrateSealedWithPrivateMethod();
+            DemonstratePreventInheritance();
+            DemonstrateCannotOverrideSealedMethod();
+            DemonstrateSealedWithPublicMethod();
+            DemonstrateSealedWithConstructorRestriction();
+            DemonstrateSealedForLogging();
+            DemonstrateSealedForConfidentialData();
+            DemonstrateSealedWithProtectedProperties();
+            DemonstrateSealedForControlObjects();
 
-            Console.WriteLine("\n=== ВСЕ ДЕМОНСТРАЦИИ ЗАВЕРШЕНЫ ===");
+            Console.WriteLine("\n=== ВСЕ ДЕМОНСТРАЦИИ SEALED КЛАССОВ ЗАВЕРШЕНЫ ===");
         }
     }
 }
+```
